@@ -1,38 +1,38 @@
 "use client";
 import { motion } from "framer-motion";
 
-interface HealthMeterProps {
-  value: number; // 1.0 = danger, 2.0+ = safe
-}
-
-export default function HealthMeter({ value }: HealthMeterProps) {
+export default function HealthMeter({ value }: { value: number }) {
   const clamped = Math.min(Math.max(value, 1), 3);
   const pct = ((clamped - 1) / 2) * 100;
 
   // Spec: green >2.0, yellow 1.5–2.0, red <1.5
-  const color = value > 2.0 ? "#00d4ff" : value >= 1.5 ? "#f59e0b" : "#ef4444";
-  const label = value > 2.0 ? "Safe" : value >= 1.5 ? "Caution" : "At Risk";
+  const color = value > 2.0 ? "#10b981" : value >= 1.5 ? "#f59e0b" : "#ef4444";
+  const label = value > 2.0 ? "SAFE" : value >= 1.5 ? "CAUTION" : "AT RISK";
+  const labelColor = value > 2.0 ? "text-green" : value >= 1.5 ? "text-yellow" : "text-red";
+  const labelBg = value > 2.0 ? "bg-green-dim border-green/20" : value >= 1.5 ? "bg-yellow-dim border-yellow/20" : "bg-red-dim border-red/20";
 
   return (
-    <div className="w-full">
-      <div className="mb-1.5 flex justify-between text-xs font-mono">
-        <span className="text-muted">Health Factor</span>
-        <span style={{ color }} className="font-semibold">
-          {value.toFixed(2)} — {label}
-        </span>
+    <div className="w-full space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="label">Health Factor</span>
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-lg font-semibold" style={{ color }}>{value.toFixed(2)}</span>
+          <span className={`rounded-full border px-2 py-0.5 text-[9px] font-mono font-semibold ${labelColor} ${labelBg}`}>{label}</span>
+        </div>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-surface-2">
+      <div className="h-2 w-full overflow-hidden rounded-full bg-elevated">
         <motion.div
           className="h-full rounded-full"
-          style={{ backgroundColor: color }}
+          style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}60` }}
           initial={{ width: 0 }}
           animate={{ width: `${pct}%` }}
           transition={{ duration: 0.8, ease: "easeOut" }}
         />
       </div>
-      <div className="mt-1 flex justify-between text-[10px] font-mono text-muted">
-        <span>1.0 Liquidation</span>
-        <span>3.0 Safe</span>
+      <div className="flex justify-between text-2xs font-mono text-tertiary">
+        <span>1.0 · Liquidation</span>
+        <span>Liquidation threshold: 1.2×</span>
+        <span>3.0 · Safe</span>
       </div>
     </div>
   );

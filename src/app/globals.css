@@ -4,17 +4,74 @@
 
 @import "@solana/wallet-adapter-react-ui/styles.css";
 
+/* JetBrains Mono from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 :root {
-  --font-geist-sans: "Geist", sans-serif;
-  --font-geist-mono: "Geist Mono", monospace;
+  --font-inter: "Inter", sans-serif;
+  --font-jetbrains: "JetBrains Mono", monospace;
 }
 
-body {
-  background-color: #0a0a0f;
-  color: #e2e2f0;
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: #080810;
+    color: #f0f0ff;
+    font-family: var(--font-inter);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.06) #080810;
+  }
+
+  /* Wallet adapter modal override */
+  .wallet-adapter-modal-wrapper {
+    background: #0f0f1a !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    border-radius: 16px !important;
+  }
+  .wallet-adapter-button {
+    background: rgba(79,142,255,0.12) !important;
+    border: 1px solid rgba(79,142,255,0.3) !important;
+    border-radius: 10px !important;
+    font-family: var(--font-jetbrains) !important;
+  }
+  .wallet-adapter-button:hover {
+    background: rgba(79,142,255,0.2) !important;
+  }
 }
 
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #1e1e2e #0a0a0f;
+@layer utilities {
+  .card {
+    @apply rounded-xl border border-border bg-surface shadow-card;
+  }
+  .card-hover {
+    @apply transition-all duration-200 hover:border-border-active hover:shadow-card-hover hover:-translate-y-0.5;
+  }
+  .btn-primary {
+    @apply flex items-center justify-center gap-2 rounded-xl bg-blue px-6 py-3 text-sm font-semibold text-white transition-all duration-150 hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .btn-secondary {
+    @apply flex items-center justify-center gap-2 rounded-xl border border-border-active px-6 py-3 text-sm font-semibold text-primary transition-all duration-150 hover:border-blue hover:text-blue active:scale-[0.98];
+  }
+  .btn-ghost {
+    @apply flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm text-secondary transition-colors duration-150 hover:text-primary;
+  }
+  .label {
+    @apply text-2xs font-mono uppercase tracking-[0.1em] text-tertiary;
+  }
+  .mono-data {
+    @apply font-mono text-primary;
+  }
+  .skeleton {
+    @apply rounded bg-border animate-pulse;
+    background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
 }

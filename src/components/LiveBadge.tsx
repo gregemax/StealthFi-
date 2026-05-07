@@ -15,26 +15,26 @@ export default function LiveBadge() {
 
   if (status === "connecting") {
     return (
-      <span className="flex items-center gap-1.5 text-[10px] font-mono text-muted">
-        <span className="h-1.5 w-1.5 rounded-full bg-muted animate-pulse" />
-        connecting...
+      <span className="hidden sm:flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1" style={{ fontFamily: "var(--font-jetbrains)" }}>
+        <span className="h-1.5 w-1.5 rounded-full bg-tertiary animate-pulse" />
+        <span className="text-[10px] text-tertiary">connecting</span>
       </span>
     );
   }
 
   if (status === "error") {
     return (
-      <span className="flex items-center gap-1.5 text-[10px] font-mono text-red-400">
-        <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
-        Ika offline
+      <span className="hidden sm:flex items-center gap-1.5 rounded-full border border-red/20 bg-red-dim px-2.5 py-1" style={{ fontFamily: "var(--font-jetbrains)" }}>
+        <span className="h-1.5 w-1.5 rounded-full bg-red" />
+        <span className="text-[10px] text-red">Ika offline</span>
       </span>
     );
   }
 
   return (
-    <span className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400">
-      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-      Ika testnet live
+    <span className="hidden sm:flex items-center gap-1.5 rounded-full border border-cyan/20 bg-cyan-dim px-2.5 py-1" style={{ fontFamily: "var(--font-jetbrains)" }}>
+      <span className="h-1.5 w-1.5 rounded-full bg-cyan animate-pulse" />
+      <span className="text-[10px] text-cyan">Ika Live</span>
     </span>
   );
 }
