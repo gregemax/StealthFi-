@@ -1,29 +1,20 @@
 "use client";
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { storage, type DepositRecord, type LoanRecord } from "@/lib/storage";
-import { MOCK_STATS } from "@/lib/mockData";
+import { useStealthFiState } from "@/hooks/useStealthFiState";
 import HealthMeter from "@/components/HealthMeter";
 
-function StatCard({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: boolean }) {
-  return (
-    <div className="rounded-xl border border-border bg-surface p-6">
-      <div className="mb-3 text-xs font-mono uppercase tracking-widest text-muted">{label}</div>
-      <p className={`font-mono text-2xl font-semibold ${accent ? "text-accent" : "text-text"}`}>{value}</p>
-      {sub && <p className="mt-1 text-[10px] font-mono text-muted">{sub}</p>}
-    </div>
-  );
+function fmt(n: number) {
+  return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
 }
 
 export default function DashboardPage() {
-  const [deposit, setDeposit] = useState<DepositRecord | null>(null);
-  const [loan, setLoan] = useState<LoanRecord | null>(null);
+  const { deposit, loan, hasDWallet, isLoading } = useStealthFiState();
 
-  useEffect(() => {
-    setDeposit(storage.getDeposit());
-    setLoan(storage.getLoan());
-  }, []);
+  const hfColor = !loan ? "text-text"
+    : loan.healthFactor > 2.0 ? "text-accent"
+    : loan.healthFactor >= 1.5 ? "text-amber-400"
+    : "text-red-400";
 
   return (
     <div className="space-y-10">
@@ -32,52 +23,101 @@ export default function DashboardPage() {
         <p className="text-sm text-text-dim">Confidential cross-chain lending — powered by Ika dWallet &amp; Encrypt FHE</p>
       </div>
 
-      {/* Protocol stats */}
+      {/* Stats row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total Locked Value" value={MOCK_STATS.totalLockedValue} />
-        <StatCard label="Active Loans" value={MOCK_STATS.activeLoans} />
-        <StatCard
-          label="Your Collateral"
-          value={deposit ? `$${deposit.usdValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "—"}
-          sub={deposit ? `${deposit.asset} · encrypted` : "No deposit yet"}
-          accent={!!deposit}
-        />
-        <StatCard
-          label="Active Loan"
-          value={loan ? `${loan.loanAmount.toLocaleString()} USDC` : "—"}
-          sub={loan ? `Borrowed ${new Date(loan.timestamp).toLocaleDateString()}` : "No loan yet"}
-          accent={!!loan}
-        />
-      </div>
-
-      {/* Health factor + dWallet row */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {/* Protocol stat */}
         <div className="rounded-xl border border-border bg-surface p-6">
-          <div className="mb-4 text-xs font-mono uppercase tracking-widest text-muted">Your Health Factor</div>
-          {loan ? (
-            <>
-              <HealthMeter value={loan.healthFactor} />
-              <p className="mt-2 text-[10px] font-mono text-muted">encrypted on-chain — computed via FHE</p>
-            </>
-          ) : (
-            <p className="font-mono text-2xl font-semibold text-text">—</p>
-          )}
+          <p className="mb-3 text-xs font-mono uppercase tracking-widest text-muted">Total Value Locked</p>
+          <p className="font-mono text-2xl font-semibold text-text">$2.4B</p>
         </div>
+
+        {/* Your Collateral */}
         <div className="rounded-xl border border-border bg-surface p-6">
-          <div className="mb-4 text-xs font-mono uppercase tracking-widest text-muted">dWallet Status</div>
-          {deposit ? (
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="font-mono text-sm text-emerald-400">Active</span>
-              <span className="font-mono text-xs text-muted ml-2">
-                {deposit.dWalletId.slice(0, 6)}...{deposit.dWalletId.slice(-4)}
-              </span>
+          <p className="mb-3 text-xs font-mono uppercase tracking-widest text-muted">Your Collateral</p>
+          {isLoading ? (
+            <p className="font-mono text-2xl text-muted">…</p>
+          ) : deposit ? (
+            <div>
+              <p className="font-mono text-2xl font-semibold text-accent">${fmt(deposit.usdValue)}</p>
+              <span className="mt-1 inline-block rounded border border-accent/30 bg-accent-dim px-1.5 py-0.5 text-[10px] font-mono text-accent">{deposit.asset}</span>
             </div>
           ) : (
             <p className="font-mono text-2xl font-semibold text-text">—</p>
           )}
         </div>
+
+        {/* Your Health Factor */}
+        <div className="rounded-xl border border-border bg-surface p-6">
+          <p className="mb-3 text-xs font-mono uppercase tracking-widest text-muted">Your Health Factor</p>
+          {isLoading ? (
+            <p className="font-mono text-2xl text-muted">…</p>
+          ) : loan ? (
+            <p className={`font-mono text-2xl font-semibold ${hfColor}`}>{loan.healthFactor.toFixed(2)}</p>
+          ) : (
+            <p className="font-mono text-2xl font-semibold text-text">—</p>
+          )}
+        </div>
+
+        {/* Active Loan */}
+        <div className="rounded-xl border border-border bg-surface p-6">
+          <p className="mb-3 text-xs font-mono uppercase tracking-widest text-muted">Active Loan</p>
+          {isLoading ? (
+            <p className="font-mono text-2xl text-muted">…</p>
+          ) : loan ? (
+            <p className="font-mono text-2xl font-semibold text-accent">{loan.loanAmount.toLocaleString()} <span className="text-base text-text-dim">USDC</span></p>
+          ) : (
+            <p className="font-mono text-2xl font-semibold text-text">—</p>
+          )}
+        </div>
       </div>
+
+      {/* dWallet status */}
+      <div className="rounded-xl border border-border bg-surface p-5">
+        <p className="mb-3 text-xs font-mono uppercase tracking-widest text-muted">dWallet Status</p>
+        {isLoading ? (
+          <p className="font-mono text-sm text-muted">…</p>
+        ) : hasDWallet && deposit ? (
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="font-mono text-sm text-emerald-400">Active</span>
+            <span className="font-mono text-xs text-muted">— {deposit.dWalletId.slice(0, 6)}...{deposit.dWalletId.slice(-4)}</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-muted" />
+            <span className="font-mono text-sm text-muted">Not created</span>
+          </div>
+        )}
+      </div>
+
+      {/* Portfolio section — only if data exists */}
+      {(deposit || loan) && (
+        <div className="rounded-xl border border-accent/20 bg-surface p-6 space-y-4">
+          <p className="text-xs font-mono uppercase tracking-widest text-accent">Your Portfolio</p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <p className="text-[10px] font-mono text-muted mb-1">Collateral</p>
+              <p className="font-mono text-sm text-text">{deposit ? `$${fmt(deposit.usdValue)} ${deposit.asset}` : "—"}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-mono text-muted mb-1">Loan</p>
+              <p className="font-mono text-sm text-text">{loan ? `${loan.loanAmount.toLocaleString()} USDC` : "—"}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-mono text-muted mb-1">Health Factor</p>
+              {loan ? <HealthMeter value={loan.healthFactor} /> : <p className="font-mono text-sm text-text">—</p>}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-3 pt-2">
+            <Link href="/borrow" className="flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 font-mono text-xs text-text-dim hover:border-accent hover:text-accent transition-colors">
+              Manage Position <ArrowRight size={12} />
+            </Link>
+            <Link href="/liquidations" className="flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 font-mono text-xs text-text-dim hover:border-accent hover:text-accent transition-colors">
+              View Liquidation Risk <ArrowRight size={12} />
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* CTAs */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

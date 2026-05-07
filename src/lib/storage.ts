@@ -11,6 +11,7 @@ export interface LoanRecord {
   loanAmount: number;
   collateralUSD: number;
   healthFactor: number;
+  asset: string;
   timestamp: number;
 }
 

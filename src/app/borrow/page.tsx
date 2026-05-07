@@ -51,6 +51,7 @@ export default function BorrowPage() {
         loanAmount,
         collateralUSD: deposit.usdValue,
         healthFactor: hf,
+        asset: deposit.asset,
         timestamp: Date.now(),
       };
       storage.setLoan(record);

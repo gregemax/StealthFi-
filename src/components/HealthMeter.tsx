@@ -9,11 +9,9 @@ export default function HealthMeter({ value }: HealthMeterProps) {
   const clamped = Math.min(Math.max(value, 1), 3);
   const pct = ((clamped - 1) / 2) * 100;
 
-  const color =
-    pct > 60 ? "#00d4ff" : pct > 30 ? "#f59e0b" : "#ef4444";
-
-  const label =
-    pct > 60 ? "Healthy" : pct > 30 ? "At Risk" : "Danger";
+  // Spec: green >2.0, yellow 1.5–2.0, red <1.5
+  const color = value > 2.0 ? "#00d4ff" : value >= 1.5 ? "#f59e0b" : "#ef4444";
+  const label = value > 2.0 ? "Safe" : value >= 1.5 ? "Caution" : "At Risk";
 
   return (
     <div className="w-full">

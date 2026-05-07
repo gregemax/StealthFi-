@@ -83,7 +83,7 @@ export default function ConnectModal({ onClose }: ConnectModalProps) {
               className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-mono font-semibold transition-opacity hover:opacity-90"
               style={{ background: "#ab9ff222", border: "1px solid #ab9ff2", color: "#ab9ff2" }}
             >
-              <img src="https://phantom.app/img/phantom-logo.svg" alt="" className="h-4 w-4" onError={(e) => (e.currentTarget.style.display = "none")} />
+              <img src="https://phantom.app/img/phantom-logo.svg" alt="" className="h-4 w-4" onError={(e) => (e.currentTarget.style.display = "none")} /> {/* eslint-disable-line @next/next/no-img-element */}
               Connect Phantom
             </button>
           ) : (
