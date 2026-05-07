@@ -24,7 +24,7 @@ export default function StepProgress({ steps, onClose }: { steps: string[]; onCl
             <X size={16} />
           </button>
         )}
-        <h3 className="mb-8 text-xs font-mono uppercase tracking-[0.1em] text-secondary">Transaction Progress</h3>
+        <h3 className="mb-8 label">Transaction Progress</h3>
         <div className="space-y-6">
           {steps.map((step, i) => {
             const isActive = i === current;
@@ -37,10 +37,8 @@ export default function StepProgress({ steps, onClose }: { steps: string[]; onCl
                       <CheckCircle size={20} className="text-green" />
                     </motion.div>
                   ) : isActive ? (
-                    <div className="relative">
-                      <div className="h-5 w-5 rounded-full border-2 border-blue flex items-center justify-center" style={{ boxShadow: "0 0 12px rgba(79,142,255,0.5)" }}>
-                        <Loader2 size={11} className="animate-spin text-blue" />
-                      </div>
+                    <div className="h-5 w-5 rounded-full border-2 border-blue flex items-center justify-center" style={{ boxShadow: "0 0 12px rgba(79,142,255,0.4)" }}>
+                      <Loader2 size={11} className="animate-spin text-blue" />
                     </div>
                   ) : (
                     <div className="h-5 w-5 rounded-full border border-border flex items-center justify-center">
@@ -48,22 +46,17 @@ export default function StepProgress({ steps, onClose }: { steps: string[]; onCl
                     </div>
                   )}
                 </div>
-                <div>
-                  <p className={`text-sm font-medium transition-colors ${isDone ? "text-green" : isActive ? "text-primary" : "text-tertiary"}`}>
-                    {step}
-                  </p>
-                </div>
+                <p className={`text-sm transition-colors ${isDone ? "text-green" : isActive ? "text-primary" : "text-tertiary"}`}>
+                  {step}
+                </p>
               </div>
             );
           })}
         </div>
         {done && (
           <AnimatePresence>
-            <motion.button
-              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              onClick={onClose}
-              className="btn-primary mt-8 w-full h-12"
-            >
+            <motion.button initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              onClick={onClose} className="btn-primary mt-8 w-full h-12">
               Done
             </motion.button>
           </AnimatePresence>

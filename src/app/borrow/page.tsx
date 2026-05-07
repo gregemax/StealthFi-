@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, CheckCircle, X, ArrowRight } from "lucide-react";
+import { Loader2, CheckCircle, X, ArrowRight, ArrowUpRight } from "lucide-react";
 import { storage, type DepositRecord, type LoanRecord } from "@/lib/storage";
 import { computeHealthFactor } from "@/lib/fheSimulator";
 import EncryptedValue from "@/components/EncryptedValue";
@@ -33,45 +33,30 @@ export default function BorrowPage() {
 
   async function handleBorrow() {
     if (!deposit || loanAmount <= 0) return;
-    setFheState("computing");
-    setEncHF(null);
-    setConfirmedHF(null);
-    setShowFheModal(true);
-
+    setFheState("computing"); setEncHF(null); setConfirmedHF(null); setShowFheModal(true);
     try {
       const enc = await computeHealthFactor(deposit.encryptedAmount, loanAmount);
       setEncHF(enc);
-      // Simulate threshold decryption reveal
       await new Promise((r) => setTimeout(r, 600));
       const hf = parseFloat(healthFactor.toFixed(2));
       setConfirmedHF(hf);
       setFheState("done");
-
-      const record: LoanRecord = {
-        loanAmount,
-        collateralUSD: deposit.usdValue,
-        healthFactor: hf,
-        asset: deposit.asset,
-        timestamp: Date.now(),
-      };
+      const record: LoanRecord = { loanAmount, collateralUSD: deposit.usdValue, healthFactor: hf, asset: deposit.asset, timestamp: Date.now() };
       storage.setLoan(record);
       setLoan(record);
     } catch (err) {
       console.error("[StealthFi] Ika fallback:", err);
-      setFheState("idle");
-      setShowFheModal(false);
+      setFheState("idle"); setShowFheModal(false);
     }
   }
 
   if (!deposit) {
     return (
-      <div className="mx-auto max-w-lg space-y-8">
-        <div>
-          <h1 className="font-mono text-2xl font-bold text-text">Borrow USDC</h1>
-        </div>
-        <div className="rounded-xl border border-border bg-surface p-10 text-center space-y-4">
-          <p className="font-mono text-sm text-text-dim">No collateral found — deposit first</p>
-          <Link href="/deposit" className="inline-flex items-center gap-2 rounded-lg border border-accent bg-accent-dim px-5 py-2 font-mono text-sm text-accent hover:bg-accent hover:text-bg transition-colors">
+      <div className="mx-auto max-w-xl space-y-8">
+        <h1 className="text-4xl font-bold tracking-tight text-primary">Borrow USDC</h1>
+        <div className="card p-12 text-center space-y-4">
+          <p className="text-secondary">No collateral found — deposit first</p>
+          <Link href="/deposit" className="btn-primary mx-auto h-11 px-6">
             Go to Deposit <ArrowRight size={14} />
           </Link>
         </div>
@@ -80,151 +65,145 @@ export default function BorrowPage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg space-y-8">
-      <div>
-        <h1 className="font-mono text-2xl font-bold text-text">Borrow USDC</h1>
-        <p className="mt-1 text-sm text-text-dim">Borrow against your encrypted collateral</p>
+    <div className="mx-auto max-w-2xl space-y-8">
+      <div className="space-y-1">
+        <p className="label"><Link href="/" className="hover:text-secondary transition-colors">Dashboard</Link> / Borrow</p>
+        <h1 className="text-4xl font-bold tracking-tight text-primary">Borrow USDC</h1>
+        <p className="text-secondary">Borrow against your encrypted collateral.</p>
       </div>
 
-      {/* Collateral card */}
-      <div className="rounded-xl border border-border bg-surface p-5 space-y-3">
-        <p className="text-[10px] font-mono uppercase tracking-widest text-muted">Your Collateral</p>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-lg">{deposit.asset === "BTC" ? "₿" : "Ξ"}</span>
-            <span className="font-mono text-sm font-semibold text-text">{deposit.asset}</span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left — Collateral */}
+        <div className="card p-6 space-y-5">
+          <p className="label">Your Collateral</p>
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-elevated border border-border text-2xl">
+              {deposit.asset === "BTC" ? "₿" : "Ξ"}
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-primary">${deposit.usdValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+              <p className="text-sm text-secondary">{deposit.amount} {deposit.asset}</p>
+            </div>
           </div>
-          <span className="font-mono text-sm text-text">${deposit.usdValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+          <div className="space-y-3 pt-2 border-t border-border">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-tertiary">Balance</span>
+              <EncryptedValue />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-tertiary">dWallet</span>
+              <a href={`https://suiscan.xyz/testnet/object/${deposit.dWalletId}`} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1 font-mono text-xs text-blue hover:underline">
+                {trunc(deposit.dWalletId)} <ArrowUpRight size={11} />
+              </a>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-mono text-muted">Balance</span>
-          <EncryptedValue />
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-mono text-muted">dWallet</span>
-          <span className="font-mono text-xs text-accent">{trunc(deposit.dWalletId)}</span>
-        </div>
-      </div>
 
-      {/* Loan amount */}
-      <div className="space-y-3">
-        <div className="flex justify-between text-xs font-mono">
-          <span className="uppercase tracking-widest text-muted">Loan Amount</span>
-          <span className="text-text-dim">Max: <span className="text-text">${maxLoan.toLocaleString()}</span> USDC (75% LTV)</span>
-        </div>
-        <input
-          type="range" min={100} max={maxLoan} step={100}
-          value={loanAmount}
-          onChange={(e) => setLoanAmount(Number(e.target.value))}
-          className="w-full accent-accent"
-        />
-        <div className="flex items-center rounded-xl border border-border bg-surface px-4 py-2 focus-within:border-accent">
-          <input
-            type="number" min={100} max={maxLoan} step={100}
-            value={loanAmount}
-            onChange={(e) => setLoanAmount(Math.min(Number(e.target.value), maxLoan))}
-            className="flex-1 bg-transparent font-mono text-base text-text outline-none"
-          />
-          <span className="font-mono text-sm text-text-dim">USDC</span>
-        </div>
-      </div>
+        {/* Right — Borrow */}
+        <div className="card p-6 space-y-5">
+          <p className="label">Borrow USDC</p>
+          <div className="space-y-2">
+            <div className="flex justify-between text-xs">
+              <span className="text-tertiary">Loan Amount</span>
+              <span className="text-secondary">Max 75% LTV · <span className="text-primary font-medium">${maxLoan.toLocaleString()}</span> available</span>
+            </div>
+            <div className="flex items-center rounded-xl border border-border bg-elevated h-14 px-5 focus-within:border-blue/40 transition-colors">
+              <input type="number" min={100} max={maxLoan} step={100} value={loanAmount}
+                onChange={(e) => setLoanAmount(Math.min(Number(e.target.value), maxLoan))}
+                className="flex-1 bg-transparent text-xl font-semibold text-primary outline-none"
+                style={{ fontFamily: "var(--font-jetbrains)" }} />
+              <span className="font-mono text-sm text-secondary">USDC</span>
+            </div>
+            <input type="range" min={100} max={maxLoan} step={100} value={loanAmount}
+              onChange={(e) => setLoanAmount(Number(e.target.value))}
+              className="w-full accent-blue" />
+          </div>
 
-      {/* Health factor */}
-      <div className="rounded-xl border border-border bg-surface p-5 space-y-3">
-        <p className="text-[10px] font-mono uppercase tracking-widest text-muted">Health Factor</p>
-        {loanAmount > 0 ? (
-          <>
-            <HealthMeter value={confirmedHF ?? healthFactor} />
-            <p className="text-[10px] font-mono text-muted">encrypted on-chain — computed via FHE</p>
-          </>
-        ) : (
-          <p className="font-mono text-xs text-muted">Enter a loan amount to preview</p>
-        )}
+          {/* Health factor */}
+          <div className="space-y-3 pt-2 border-t border-border">
+            {loanAmount > 0 ? (
+              <>
+                <HealthMeter value={confirmedHF ?? healthFactor} />
+                <p className="text-2xs text-tertiary" style={{ fontFamily: "var(--font-jetbrains)" }}>
+                  encrypted on-chain · computed via FHE
+                </p>
+              </>
+            ) : (
+              <p className="text-xs text-tertiary">Enter a loan amount to preview health factor</p>
+            )}
+          </div>
+
+          <button onClick={handleBorrow} disabled={loanAmount <= 0 || loanAmount > maxLoan || fheState === "computing"}
+            className="btn-primary w-full h-12 gap-2">
+            {fheState === "computing" && <Loader2 size={14} className="animate-spin" />}
+            Borrow {loanAmount.toLocaleString()} USDC
+          </button>
+        </div>
       </div>
 
       {/* Active loan card */}
       {loan && (
-        <div className="rounded-xl border border-accent/30 bg-surface p-5 space-y-3">
-          <p className="text-[10px] font-mono uppercase tracking-widest text-accent">Active Loan</p>
-          <div className="flex justify-between font-mono text-sm">
-            <span className="text-muted">Borrowed</span>
-            <span className="text-text">{loan.loanAmount.toLocaleString()} USDC</span>
+        <div className="card p-6 space-y-4" style={{ borderLeft: "3px solid #10b981" }}>
+          <p className="label text-green">Active Loan</p>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <p className="text-2xs text-tertiary mb-1">Borrowed</p>
+              <p className="font-semibold text-primary">{loan.loanAmount.toLocaleString()} <span className="text-secondary text-sm">USDC</span></p>
+            </div>
+            <div>
+              <p className="text-2xs text-tertiary mb-1">Collateral</p>
+              <EncryptedValue />
+            </div>
+            <div>
+              <p className="text-2xs text-tertiary mb-1">Health Factor</p>
+              <p className={`font-semibold ${loan.healthFactor >= 2 ? "text-green" : loan.healthFactor >= 1.5 ? "text-yellow" : "text-red"}`}>
+                {loan.healthFactor.toFixed(2)}
+              </p>
+            </div>
           </div>
-          <div className="flex justify-between font-mono text-sm">
-            <span className="text-muted">Collateral</span>
-            <EncryptedValue />
-          </div>
-          <div className="flex justify-between font-mono text-sm">
-            <span className="text-muted">Health Factor</span>
-            <span className={loan.healthFactor >= 2 ? "text-accent" : loan.healthFactor >= 1.5 ? "text-amber-400" : "text-red-400"}>
-              {loan.healthFactor.toFixed(2)}
-            </span>
-          </div>
-          <Link href="/liquidations" className="flex items-center justify-center gap-2 rounded-lg border border-border py-2 font-mono text-xs text-text-dim hover:border-accent hover:text-accent transition-colors">
-            View liquidation risk <ArrowRight size={12} />
+          <Link href="/liquidations" className="btn-ghost text-xs border border-border rounded-lg px-4 py-2 w-fit">
+            View liquidation risk <ArrowRight size={11} className="inline ml-1" />
           </Link>
         </div>
       )}
 
-      <button
-        onClick={handleBorrow}
-        disabled={loanAmount <= 0 || fheState === "computing"}
-        className="w-full flex items-center justify-center gap-2 rounded-xl border border-accent bg-accent-dim py-3 font-mono text-sm text-accent transition-colors hover:bg-accent hover:text-bg disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {fheState === "computing" && <Loader2 size={14} className="animate-spin" />}
-        Borrow {loanAmount.toLocaleString()} USDC
-      </button>
-
       <FHEStatus />
 
-      {/* FHE mini modal */}
+      {/* FHE modal */}
       <AnimatePresence>
         {showFheModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-sm rounded-xl border border-border bg-surface p-8"
-            >
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm">
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }}
+              className="relative w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl border border-border bg-surface p-8 shadow-card">
               {fheState === "done" && (
-                <button onClick={() => setShowFheModal(false)} className="absolute right-4 top-4 text-muted hover:text-text">
+                <button onClick={() => setShowFheModal(false)} className="absolute right-5 top-5 text-tertiary hover:text-secondary transition-colors">
                   <X size={16} />
                 </button>
               )}
-              <h3 className="mb-6 text-sm font-mono uppercase tracking-widest text-accent">FHE Computation</h3>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 w-5 shrink-0">
-                    {fheState === "computing" && !encHF
-                      ? <Loader2 size={18} className="animate-spin text-accent" />
-                      : <CheckCircle size={18} className="text-accent" />}
+              <h3 className="mb-6 label">FHE Computation</h3>
+              <div className="space-y-5">
+                {[
+                  { label: "Computing health factor on encrypted state...", done: !!encHF, active: fheState === "computing" && !encHF },
+                  { label: confirmedHF !== null ? `Health factor confirmed: ${confirmedHF.toFixed(2)} ✓` : "Threshold decryption...", done: fheState === "done", active: !!encHF && fheState === "computing" },
+                ].map(({ label, done, active }, i) => (
+                  <div key={i} className="flex items-start gap-4">
+                    <div className="shrink-0 mt-0.5">
+                      {done ? <CheckCircle size={18} className="text-green" />
+                        : active ? <div className="h-5 w-5 rounded-full border-2 border-blue flex items-center justify-center" style={{ boxShadow: "0 0 12px rgba(79,142,255,0.4)" }}><Loader2 size={11} className="animate-spin text-blue" /></div>
+                        : <div className="h-5 w-5 rounded-full border border-border" />}
+                    </div>
+                    <p className={`text-sm ${done ? "text-green" : active ? "text-primary" : "text-tertiary"}`}>{label}</p>
                   </div>
-                  <span className={`text-sm font-mono ${encHF ? "text-accent" : "text-text"}`}>
-                    Computing health factor on encrypted state...
-                  </span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 w-5 shrink-0">
-                    {!encHF ? <div className="h-4 w-4 rounded-full border border-border" />
-                      : fheState === "computing" ? <Loader2 size={18} className="animate-spin text-accent" />
-                      : <CheckCircle size={18} className="text-accent" />}
-                  </div>
-                  <span className={`text-sm font-mono ${fheState === "done" ? "text-accent" : encHF ? "text-text" : "text-muted"}`}>
-                    {confirmedHF !== null
-                      ? `Health factor confirmed: ${confirmedHF.toFixed(2)} ✓`
-                      : "Health factor confirmed..."}
-                  </span>
-                </div>
+                ))}
               </div>
               {fheState === "done" && confirmedHF !== null && (
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-6 space-y-3">
-                  <p className="font-mono text-xs text-accent">Loan active — {loanAmount.toLocaleString()} USDC borrowed</p>
-                  <p className="font-mono text-xs text-text-dim">+{loanAmount.toLocaleString()} USDC added to your wallet</p>
-                  <button
-                    onClick={() => setShowFheModal(false)}
-                    className="w-full rounded border border-accent bg-accent-dim py-2 text-sm font-mono text-accent hover:bg-accent hover:text-bg transition-colors"
-                  >
-                    Done
-                  </button>
+                  <div className="rounded-xl bg-green-dim border border-green/20 p-4">
+                    <p className="text-sm font-semibold text-green">Loan active — {loanAmount.toLocaleString()} USDC borrowed</p>
+                    <p className="text-xs text-secondary mt-1">+{loanAmount.toLocaleString()} USDC added to your position</p>
+                  </div>
+                  <button onClick={() => setShowFheModal(false)} className="btn-primary w-full h-11">Done</button>
                 </motion.div>
               )}
             </motion.div>

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { useStealthFiState } from "@/hooks/useStealthFiState";
 import HealthMeter from "@/components/HealthMeter";
 
@@ -8,131 +8,161 @@ function fmt(n: number) {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
 }
 
+function StatCard({ label, value, sub, accent, loading }: {
+  label: string; value: string; sub?: string; accent?: boolean; loading?: boolean;
+}) {
+  return (
+    <div className="card card-hover p-6 flex flex-col gap-3">
+      <p className="label">{label}</p>
+      {loading ? (
+        <div className="skeleton h-8 w-24 rounded" />
+      ) : (
+        <p className={`font-semibold text-3xl tracking-tight ${accent ? "text-blue" : "text-primary"}`}>{value}</p>
+      )}
+      {sub && !loading && <p className="text-xs text-tertiary">{sub}</p>}
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { deposit, loan, hasDWallet, isLoading } = useStealthFiState();
 
-  const hfColor = !loan ? "text-text"
-    : loan.healthFactor > 2.0 ? "text-accent"
-    : loan.healthFactor >= 1.5 ? "text-amber-400"
-    : "text-red-400";
+  const hfColor = !loan ? "text-primary"
+    : loan.healthFactor > 2.0 ? "text-green"
+    : loan.healthFactor >= 1.5 ? "text-yellow"
+    : "text-red";
 
   return (
-    <div className="space-y-10">
-      <div>
-        <h1 className="mb-1 font-mono text-3xl font-bold tracking-tight text-text">Protocol Overview</h1>
-        <p className="text-sm text-text-dim">Confidential cross-chain lending — powered by Ika dWallet &amp; Encrypt FHE</p>
+    <div className="space-y-16">
+      {/* Hero */}
+      <div className="pt-8 space-y-6">
+        <div className="space-y-3">
+          <h1 className="text-5xl sm:text-6xl font-bold tracking-tighter text-primary leading-[1.05]">
+            Institutional DeFi,<br />Finally Private.
+          </h1>
+          <p className="text-lg text-secondary max-w-xl">
+            Cross-chain collateral via Ika. FHE-encrypted positions via Encrypt. Zero exposure.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Link href="/deposit" className="btn-primary h-12 px-6">
+            Deposit Collateral
+          </Link>
+          <Link href="/liquidations" className="btn-secondary h-12 px-6">
+            Learn How It Works
+          </Link>
+        </div>
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Protocol stat */}
-        <div className="rounded-xl border border-border bg-surface p-6">
-          <p className="mb-3 text-xs font-mono uppercase tracking-widest text-muted">Total Value Locked</p>
-          <p className="font-mono text-2xl font-semibold text-text">$2.4B</p>
-        </div>
-
-        {/* Your Collateral */}
-        <div className="rounded-xl border border-border bg-surface p-6">
-          <p className="mb-3 text-xs font-mono uppercase tracking-widest text-muted">Your Collateral</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Total Value Locked" value="$2.4B" sub="Across all positions" />
+        <StatCard
+          label="Your Collateral"
+          value={deposit ? `$${fmt(deposit.usdValue)}` : "—"}
+          sub={deposit ? `${deposit.asset} · encrypted` : "No deposit yet"}
+          accent={!!deposit}
+          loading={isLoading}
+        />
+        <div className="card card-hover p-6 flex flex-col gap-3">
+          <p className="label">Your Health Factor</p>
           {isLoading ? (
-            <p className="font-mono text-2xl text-muted">…</p>
-          ) : deposit ? (
-            <div>
-              <p className="font-mono text-2xl font-semibold text-accent">${fmt(deposit.usdValue)}</p>
-              <span className="mt-1 inline-block rounded border border-accent/30 bg-accent-dim px-1.5 py-0.5 text-[10px] font-mono text-accent">{deposit.asset}</span>
-            </div>
-          ) : (
-            <p className="font-mono text-2xl font-semibold text-text">—</p>
-          )}
-        </div>
-
-        {/* Your Health Factor */}
-        <div className="rounded-xl border border-border bg-surface p-6">
-          <p className="mb-3 text-xs font-mono uppercase tracking-widest text-muted">Your Health Factor</p>
-          {isLoading ? (
-            <p className="font-mono text-2xl text-muted">…</p>
+            <div className="skeleton h-8 w-16 rounded" />
           ) : loan ? (
-            <p className={`font-mono text-2xl font-semibold ${hfColor}`}>{loan.healthFactor.toFixed(2)}</p>
+            <p className={`font-semibold text-3xl tracking-tight ${hfColor}`}>{loan.healthFactor.toFixed(2)}</p>
           ) : (
-            <p className="font-mono text-2xl font-semibold text-text">—</p>
+            <p className="font-semibold text-3xl tracking-tight text-primary">—</p>
           )}
         </div>
-
-        {/* Active Loan */}
-        <div className="rounded-xl border border-border bg-surface p-6">
-          <p className="mb-3 text-xs font-mono uppercase tracking-widest text-muted">Active Loan</p>
-          {isLoading ? (
-            <p className="font-mono text-2xl text-muted">…</p>
-          ) : loan ? (
-            <p className="font-mono text-2xl font-semibold text-accent">{loan.loanAmount.toLocaleString()} <span className="text-base text-text-dim">USDC</span></p>
-          ) : (
-            <p className="font-mono text-2xl font-semibold text-text">—</p>
-          )}
-        </div>
+        <StatCard
+          label="Active Loan"
+          value={loan ? `${loan.loanAmount.toLocaleString()}` : "—"}
+          sub={loan ? "USDC borrowed" : "No loan yet"}
+          accent={!!loan}
+          loading={isLoading}
+        />
       </div>
 
-      {/* dWallet status */}
-      <div className="rounded-xl border border-border bg-surface p-5">
-        <p className="mb-3 text-xs font-mono uppercase tracking-widest text-muted">dWallet Status</p>
-        {isLoading ? (
-          <p className="font-mono text-sm text-muted">…</p>
-        ) : hasDWallet && deposit ? (
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-mono text-sm text-emerald-400">Active</span>
-            <span className="font-mono text-xs text-muted">— {deposit.dWalletId.slice(0, 6)}...{deposit.dWalletId.slice(-4)}</span>
+      {/* dWallet + Portfolio */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* dWallet status */}
+        <div className="card p-6 space-y-3">
+          <p className="label">dWallet Status</p>
+          {isLoading ? (
+            <div className="skeleton h-5 w-32 rounded" />
+          ) : hasDWallet && deposit ? (
+            <div className="flex items-center gap-2.5">
+              <span className="h-2 w-2 rounded-full bg-green animate-pulse" />
+              <span className="text-sm font-medium text-green">Active</span>
+              <span className="font-mono text-xs text-tertiary">
+                {deposit.dWalletId.slice(0, 6)}...{deposit.dWalletId.slice(-4)}
+              </span>
+              <a href={`https://suiscan.xyz/testnet/object/${deposit.dWalletId}`}
+                target="_blank" rel="noopener noreferrer"
+                className="text-tertiary hover:text-blue transition-colors">
+                <ArrowUpRight size={12} />
+              </a>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2.5">
+              <span className="h-2 w-2 rounded-full bg-tertiary" />
+              <span className="text-sm text-tertiary">Not created</span>
+            </div>
+          )}
+        </div>
+
+        {/* Portfolio summary */}
+        {(deposit || loan) ? (
+          <div className="card p-6 space-y-4" style={{ borderLeft: "3px solid #4f8eff" }}>
+            <p className="label text-blue">Your Portfolio</p>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <p className="text-2xs text-tertiary mb-1">Collateral</p>
+                <p className="text-sm font-medium text-primary">{deposit ? `$${fmt(deposit.usdValue)}` : "—"}</p>
+                {deposit && <p className="text-2xs text-tertiary">{deposit.asset}</p>}
+              </div>
+              <div>
+                <p className="text-2xs text-tertiary mb-1">Loan</p>
+                <p className="text-sm font-medium text-primary">{loan ? `${loan.loanAmount.toLocaleString()} USDC` : "—"}</p>
+              </div>
+              <div>
+                <p className="text-2xs text-tertiary mb-1">Health</p>
+                {loan ? (
+                  <p className={`text-sm font-semibold ${hfColor}`}>{loan.healthFactor.toFixed(2)}</p>
+                ) : <p className="text-sm text-primary">—</p>}
+              </div>
+            </div>
+            {loan && <HealthMeter value={loan.healthFactor} />}
+            <div className="flex gap-2 pt-1">
+              <Link href="/borrow" className="btn-ghost text-xs px-3 py-1.5 border border-border rounded-lg">
+                Manage Position <ArrowRight size={11} className="inline ml-1" />
+              </Link>
+              <Link href="/liquidations" className="btn-ghost text-xs px-3 py-1.5 border border-border rounded-lg">
+                Liquidation Risk <ArrowRight size={11} className="inline ml-1" />
+              </Link>
+            </div>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-muted" />
-            <span className="font-mono text-sm text-muted">Not created</span>
+          <div className="card p-6 flex flex-col items-start justify-center gap-3">
+            <p className="label">Your Portfolio</p>
+            <p className="text-sm text-tertiary">Connect wallet and deposit to see your portfolio.</p>
+            <Link href="/deposit" className="btn-primary h-9 px-4 text-xs">Start Depositing</Link>
           </div>
         )}
       </div>
 
-      {/* Portfolio section — only if data exists */}
-      {(deposit || loan) && (
-        <div className="rounded-xl border border-accent/20 bg-surface p-6 space-y-4">
-          <p className="text-xs font-mono uppercase tracking-widest text-accent">Your Portfolio</p>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div>
-              <p className="text-[10px] font-mono text-muted mb-1">Collateral</p>
-              <p className="font-mono text-sm text-text">{deposit ? `$${fmt(deposit.usdValue)} ${deposit.asset}` : "—"}</p>
-            </div>
-            <div>
-              <p className="text-[10px] font-mono text-muted mb-1">Loan</p>
-              <p className="font-mono text-sm text-text">{loan ? `${loan.loanAmount.toLocaleString()} USDC` : "—"}</p>
-            </div>
-            <div>
-              <p className="text-[10px] font-mono text-muted mb-1">Health Factor</p>
-              {loan ? <HealthMeter value={loan.healthFactor} /> : <p className="font-mono text-sm text-text">—</p>}
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-3 pt-2">
-            <Link href="/borrow" className="flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 font-mono text-xs text-text-dim hover:border-accent hover:text-accent transition-colors">
-              Manage Position <ArrowRight size={12} />
-            </Link>
-            <Link href="/liquidations" className="flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 font-mono text-xs text-text-dim hover:border-accent hover:text-accent transition-colors">
-              View Liquidation Risk <ArrowRight size={12} />
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* CTAs */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {/* CTA cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           { href: "/deposit", title: "Deposit Collateral", desc: "Lock BTC or ETH via Ika dWallet — encrypted on-chain" },
           { href: "/borrow", title: "Borrow USDC", desc: "Borrow against encrypted collateral — position stays private" },
-          { href: "/liquidations", title: "Liquidations", desc: "Sealed-bid dark pool — bid on at-risk positions" },
+          { href: "/liquidations", title: "Dark Pool Auctions", desc: "Sealed-bid liquidations — no MEV, no front-running" },
         ].map(({ href, title, desc }) => (
           <Link key={href} href={href}
-            className="group flex items-center justify-between rounded-xl border border-border bg-surface p-6 transition-colors hover:border-accent">
-            <div>
-              <p className="font-mono text-sm font-semibold text-text group-hover:text-accent">{title}</p>
-              <p className="mt-1 text-xs text-text-dim">{desc}</p>
-            </div>
-            <ArrowRight size={18} className="text-muted group-hover:text-accent transition-colors" />
+            className="card card-hover p-6 flex flex-col gap-2 group">
+            <p className="text-sm font-semibold text-primary group-hover:text-blue transition-colors">{title}</p>
+            <p className="text-xs text-tertiary leading-relaxed">{desc}</p>
+            <ArrowRight size={14} className="text-tertiary group-hover:text-blue transition-colors mt-auto" />
           </Link>
         ))}
       </div>
