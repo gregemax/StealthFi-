@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import "@solana/wallet-adapter-react-ui/styles.css";
+
 :root {
   --font-geist-sans: "Geist", sans-serif;
   --font-geist-mono: "Geist Mono", monospace;

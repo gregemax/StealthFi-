@@ -1,43 +1,61 @@
 export const MOCK_STATS = {
   totalLockedValue: "$142,847,293",
   activeLoans: "3,847",
-  yourCollateral: null, // always encrypted
+  yourCollateral: null,
   yourHealthFactor: 1.82,
 };
 
 export const MOCK_ASSETS = [
-  { symbol: "BTC", name: "Bitcoin", icon: "₿", via: "Ika dWallet" },
-  { symbol: "ETH", name: "Ethereum", icon: "Ξ", via: "Ika dWallet" },
+  { symbol: "BTC", name: "Bitcoin", icon: "₿", via: "Ika dWallet (Bitcoin mainnet)" },
+  { symbol: "ETH", name: "Ethereum", icon: "Ξ", via: "Ika dWallet (Ethereum mainnet)" },
 ];
 
-export const MOCK_LIQUIDATIONS = [
+export const ASSET_PRICES: Record<string, number> = {
+  BTC: 97000,
+  ETH: 3200,
+};
+
+export interface LiquidationPosition {
+  id: string;
+  asset: "BTC" | "ETH";
+  collateralRange: string;
+  ltv: number;
+  healthFactor: number;
+  closesInSeconds: number;
+}
+
+export const MOCK_LIQUIDATIONS: LiquidationPosition[] = [
   {
-    id: "0x4f3a...██████",
-    collateralType: "BTC",
-    ltvRange: "82–89%",
-    closesIn: 3600, // seconds
-    estimatedSize: "~$48k–$61k",
+    id: "0xSTLTH:4f3ab91c",
+    asset: "BTC",
+    collateralRange: "$45,000 – $67,000",
+    ltv: 87,
+    healthFactor: 1.12,
+    closesInSeconds: 3600 * 2,
   },
   {
-    id: "0x7c1b...██████",
-    collateralType: "ETH",
-    ltvRange: "85–91%",
-    closesIn: 7200,
-    estimatedSize: "~$12k–$18k",
+    id: "0xSTLTH:7c1be04a",
+    asset: "ETH",
+    collateralRange: "$12,000 – $18,000",
+    ltv: 83,
+    healthFactor: 1.28,
+    closesInSeconds: 3600 * 5,
   },
   {
-    id: "0x2e9d...██████",
-    collateralType: "BTC",
-    ltvRange: "80–86%",
-    closesIn: 1800,
-    estimatedSize: "~$95k–$120k",
+    id: "0xSTLTH:2e9df773",
+    asset: "BTC",
+    collateralRange: "$95,000 – $120,000",
+    ltv: 91,
+    healthFactor: 1.07,
+    closesInSeconds: 3600 * 8,
   },
   {
-    id: "0x8a5f...██████",
-    collateralType: "ETH",
-    ltvRange: "83–88%",
-    closesIn: 5400,
-    estimatedSize: "~$7k–$11k",
+    id: "0xSTLTH:8a5fc2d1",
+    asset: "ETH",
+    collateralRange: "$7,000 – $11,000",
+    ltv: 79,
+    healthFactor: 1.41,
+    closesInSeconds: 3600 * 3,
   },
 ];
 
